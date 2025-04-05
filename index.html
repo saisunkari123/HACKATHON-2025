@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Recovery Web Interface</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,500&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Roboto', sans-serif; background: #eef2f3; color: #333; }
+    header { background: #007BFF; padding: 20px; text-align: center; color: #fff; }
+    header h1 { font-size: 2em; }
+    .container { max-width: 1000px; margin: 30px auto; background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .controls { text-align: center; margin-bottom: 20px; }
+    .controls input[type="file"] { margin-bottom: 10px; }
+    .btn { background: #007BFF; color: #fff; border: none; padding: 10px 20px; margin: 5px; border-radius: 4px; cursor: pointer; transition: background 0.3s; }
+    .btn:hover { background: #0056b3; }
+    .section { margin-bottom: 30px; }
+    .section h2 { background: #f0f0f0; padding: 10px; border-radius: 4px; margin-bottom: 10px; text-align: center; }
+    .list { display: flex; flex-wrap: wrap; gap: 10px; }
+    .card { background: #f9f9f9; padding: 15px; border-radius: 6px; flex: 1 1 280px; box-shadow: 0 1px 5px rgba(0,0,0,0.1); display: flex; flex-direction: column; justify-content: space-between; }
+    .card span { font-weight: 500; margin-bottom: 10px; display: block; }
+    .card .actions { text-align: right; }
+    .preview { background: #fff; border: 1px solid #ddd; padding: 15px; border-radius: 6px; margin-top: 20px; overflow-wrap: break-word; }
+    footer { text-align: center; padding: 15px; background: #007BFF; color: #fff; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Recovery Web Interface</h1>
+  </header>
+  <div class="container">
+    <div class="controls">
+      <input type="file" id="fileInput" multiple>
+      <button class="btn" id="uploadBtn">Upload Files</button>
+    </div>
+    <div id="fileInfo" class="preview"></div>
+    <div class="section">
+      <h2>Active Files</h2>
+      <div class="list" id="activeList"></div>
+    </div>
+    <div class="section">
+      <h2>Deleted Files</h2>
+      <div class="list" id="deletedList"></div>
+    </div>
+    <div class="section">
+      <h2>Recovered Files</h2>
+      <div class="list" id="recoveredList"></div>
+    </div>
+  </div>
+  <footer>
+    Recovery Web Interface © 2025
+  </footer>
+  <script>
+    const uploadBtn = document.getElementById("uploadBtn")
+    const fileInput = document.getElementById("fileInput")
+    const fileInfo = document.getElementById("fileInfo")
+    const activeList = document.getElementById("activeList")
+    const deletedList = document.getElementById("deletedList")
+    const recoveredList = document.getElementById("recoveredList")
+    let activeFiles = []
+    let deletedFiles = []
+    let recoveredFiles = []
+    uploadBtn.addEventListener("click", () => {
+      const files = fileInput.files
+      if(files.length){
+        for(let i=0;i<files.length;i++){
+          activeFiles.push({name: files[i].name, type: files[i].type, size: files[i].size, file: files[i]})
+        }
+        updateLists()
+      }
+    })
+    function updateLists(){
+      activeList.innerHTML = ""
+      deletedList.innerHTML = ""
+      recoveredList.innerHTML = ""
+      activeFiles.forEach((item,index) => {
+        let card = document.createElement("div")
+        card.className = "card"
+        let nameSpan = document.createElement("span")
+        nameSpan.textContent = item.name
+        let actions = document.createElement("div")
+        actions.className = "actions"
+        let openBtn = document.createElement("button")
+        openBtn.className = "btn"
+        openBtn.textContent = "Open"
+        openBtn.addEventListener("click", () => { openFile(item.file) })
+        let deleteBtn = document.createElement("button")
+        deleteBtn.className = "btn"
+        deleteBtn.textContent = "Delete"
+        deleteBtn.addEventListener("click", () => {
+          deletedFiles.push(activeFiles.splice(index,1)[0])
+          updateLists()
+        })
+        actions.appendChild(openBtn)
+        actions.appendChild(deleteBtn)
+        card.appendChild(nameSpan)
+        card.appendChild(actions)
+        activeList.appendChild(card)
+      })
+      deletedFiles.forEach((item,index) => {
+        let card = document.createElement("div")
+        card.className = "card"
+        let nameSpan = document.createElement("span")
+        nameSpan.textContent = item.name
+        let actions = document.createElement("div")
+        actions.className = "actions"
+        let openBtn = document.createElement("button")
+        openBtn.className = "btn"
+        openBtn.textContent = "Open"
+        openBtn.addEventListener("click", () => { openFile(item.file) })
+        let recoverBtn = document.createElement("button")
+        recoverBtn.className = "btn"
+        recoverBtn.textContent = "Recover"
+        recoverBtn.addEventListener("click", () => {
+          recoveredFiles.push(deletedFiles.splice(index,1)[0])
+          updateLists()
+        })
+        actions.appendChild(openBtn)
+        actions.appendChild(recoverBtn)
+        card.appendChild(nameSpan)
+        card.appendChild(actions)
+        deletedList.appendChild(card)
+      })
+      recoveredFiles.forEach(item => {
+        let card = document.createElement("div")
+        card.className = "card"
+        let nameSpan = document.createElement("span")
+        nameSpan.textContent = item.name
+        let actions = document.createElement("div")
+        actions.className = "actions"
+        let openBtn = document.createElement("button")
+        openBtn.className = "btn"
+        openBtn.textContent = "Open"
+        openBtn.addEventListener("click", () => { openFile(item.file) })
+        actions.appendChild(openBtn)
+        card.appendChild(nameSpan)
+        card.appendChild(actions)
+        recoveredList.appendChild(card)
+      })
+    }
+    function openFile(file){
+      const reader = new FileReader()
+      reader.onload = function(e){
+        let content = file.type.startsWith("text/") ? e.target.result.substring(0,300) : "Binary or non-text content"
+        fileInfo.innerHTML = "Name: " + file.name + "<br>Type: " + file.type + "<br>Size: " + file.size + " bytes<br><br>Content Preview:<br>" + content
+      }
+      if(file.type.startsWith("text/")){
+        reader.readAsText(file)
+      } else {
+        reader.readAsDataURL(file)
+      }
+    }
+  </script>
+</body>
+</html>
+
+
+
